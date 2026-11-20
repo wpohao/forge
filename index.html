@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+TC:wght@400;600&family=Noto+Serif+TC:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M4 14h20l-4 5H10z%27 fill=%27%232a2522%27/%3E%3Crect x=%2713%27 y=%2719%27 width=%276%27 height=%278%27 fill=%27%232a2522%27/%3E%3Ccircle cx=%2724%27 cy=%279%27 r=%274%27 fill=%27%23ff8a2a%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles/site.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body class="forge">
+  <div id="scene" aria-hidden="true"></div>
+
+  <header id="topbar">
+    <div class="who">
+      <h1 id="who-name"></h1>
+      <p id="who-title"></p>
+    </div>
+    <nav class="tools" aria-label="tools">
+      <button class="tool-btn" id="btn-lang" type="button"></button>
+      <a class="tool-btn" id="btn-plain" href="plain.html"></a>
+      <button class="tool-btn" id="btn-sky" type="button" aria-pressed="false" hidden></button>
+      <button class="tool-btn" id="btn-sound" type="button" aria-pressed="false"></button>
+    </nav>
+  </header>
+
+  <p id="hint" role="status"></p>
+  <div id="obj-label" hidden></div>
+
+  <button class="tool-btn" id="btn-exit" type="button" hidden></button>
+
+  <!-- 第一人稱打鐵：放下鐵鎚、這一輪敲了幾下、附魔成功的浮水印大字 -->
+  <button class="tool-btn" id="btn-forge-exit" type="button" hidden></button>
+  <div id="forge-hud" aria-hidden="true" hidden><span></span><span></span><span></span><span></span><span></span></div>
+  <div id="enchant-banner" role="status" aria-live="polite" hidden><p class="eb-main"></p><p class="eb-sub"></p></div>
+
+  <nav id="quickbar" aria-label="quick" hidden>
+    <span class="qb-label" id="qb-label"></span>
+    <button type="button" data-key="hearth"></button>
+    <button type="button" data-key="armory"></button>
+    <button type="button" data-key="anvil"></button>
+    <button type="button" data-key="commissions"></button>
+    <button type="button" data-key="ledger"></button>
+    <button type="button" data-key="shelf"></button>
+    <button type="button" data-key="mailbox"></button>
+  </nav>
+
+  <aside id="card" role="dialog" aria-modal="true" aria-labelledby="card-title" hidden>
+    <div class="card-head">
+      <h2 id="card-title"></h2>
+      <button id="card-close" type="button"></button>
+    </div>
+    <div id="card-body"></div>
+    <div id="toast" role="status" hidden></div>
+  </aside>
+
+  <div id="flash" aria-hidden="true"></div>
+
+  <div id="loader"><div class="loader-inner"><div class="ember-dot"></div><p id="loader-text"></p></div></div>
+
+  <div id="fallback" hidden>
+    <div>
+      <p id="fallback-text"></p>
+      <a class="tool-btn" id="fallback-link" href="plain.html"></a>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+:root {
+  --ember: #ff8a2a;
+  --ember-soft: #ffb35c;
+  --parchment: #efe3c6;
+  --parchment-dark: #e2d2ac;
+  --ink: #3a2a17;
+  --ink-soft: #6b5338;
+  --night: #141a2e;
+  --night-2: #1f1a2e;
+  --iron: #2a2522;
+  --ui-text: #f6ead6;
+  --ph-bg: #fff6c8;
+  --ph-line: #c9962e;
+  /* 附魔色（對應 src/scene/arcane.js 的 ENCHANT_COLORS）：卡片上用較深的版本以維持對比 */
+  --arcane: #6a3fb8;
+  --arcane-glow: #b07cff;
+  --enchant-1: #1f7fa8;
+  --enchant-2: #6a3fb8;
+  --enchant-3: #1f8a5a;
+  --enchant-4: #9a6a10;
+  /* 場景上用的亮色附魔（與 arcane.js 的 ARCANE 一致），附魔成功大字與打鐵進度用 */
+  --glow-1: #5fd8ff;
+  --glow-2: #b07cff;
+  --glow-3: #5dffb0;
+  --glow-4: #ffd36a;
+  --font-title: 'Cinzel', 'Noto Serif TC', Georgia, serif;
+  --font-serif: 'Noto Serif TC', Georgia, serif;
+  --font-sans: 'Noto Sans TC', system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--night);
+  color: var(--ui-text);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+button { font: inherit; cursor: pointer; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- 佔位框 ---------- */
+.ph {
+  background: var(--ph-bg);
+  color: #6b4a10;
+  border: 1.5px dashed var(--ph-line);
+  border-radius: 4px;
+  padding: 0 4px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ---------- 3D 版 ---------- */
+body.forge { overflow: hidden; }
+#scene { position: fixed; inset: 0; }
+#scene canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 16px; pointer-events: none; z-index: 10;
+}
+#topbar > * { pointer-events: auto; }
+.who { text-shadow: 0 1px 8px rgba(0,0,0,.6); min-width: 0; }
+.who h1 { font-family: var(--font-title); font-size: clamp(18px, 3vw, 26px); margin: 0; letter-spacing: .04em; }
+.who p { margin: 2px 0 0; font-size: 13px; opacity: .85; }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.tool-btn {
+  background: rgba(20, 14, 10, .55); color: var(--ui-text);
+  border: 1px solid rgba(255, 179, 92, .45); border-radius: 999px;
+  padding: 6px 12px; font-size: 13px; text-decoration: none; backdrop-filter: blur(4px);
+}
+.tool-btn:hover, .tool-btn:focus-visible { border-color: var(--ember); outline: none; box-shadow: 0 0 0 2px rgba(255,138,42,.35); }
+.tool-btn[aria-pressed="true"] { background: rgba(255, 138, 42, .3); }
+
+#hint {
+  position: fixed; left: 50%; bottom: 128px; transform: translateX(-50%);
+  background: rgba(20, 14, 10, .55); padding: 6px 14px; border-radius: 999px;
+  font-size: 13px; z-index: 5; pointer-events: none; white-space: nowrap; max-width: calc(100vw - 32px);
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+#quickbar {
+  position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%);
+  display: flex; gap: 6px; padding: 6px; z-index: 6;
+  background: rgba(20, 14, 10, .6); border: 1px solid rgba(255,179,92,.3); border-radius: 14px;
+  max-width: calc(100vw - 32px); overflow-x: auto; backdrop-filter: blur(4px);
+  scrollbar-width: none;
+}
+#quickbar::-webkit-scrollbar { display: none; }
+#quickbar[hidden] { display: none; }
+/* 桌機版卡片開啟時，快捷列移到左側剩餘空間的中央 */
+@media (min-width: 721px) {
+  body.card-open #quickbar { left: 16px; transform: none; max-width: calc(100vw - min(440px, 100vw - 32px) - 48px); }
+}
+#quickbar { transition: left .35s ease; }
+#quickbar .qb-label { align-self: center; font-size: 12px; opacity: .7; padding: 0 6px; white-space: nowrap; }
+#quickbar button {
+  background: transparent; color: var(--ui-text); border: 1px solid transparent;
+  border-radius: 10px; padding: 6px 10px; font-size: 13px; white-space: nowrap;
+}
+#quickbar button:hover, #quickbar button:focus-visible { border-color: var(--ember); outline: none; }
+#quickbar button[hidden] { display: none; }
+
+/* 放在快捷列上方，避免手機上被快捷列蓋住 */
+#btn-exit { position: fixed; left: 16px; bottom: 80px; z-index: 7; }
+#btn-exit[hidden] { display: none; }
+
+/* ---------- 第一人稱打鐵 ---------- */
+/* 鐵鎚就是游標：藏起系統游標；快捷列與「出門」先藏起來（用 visibility，量測快捷列高度不受影響） */
+body.forging #scene canvas { cursor: none; }
+body.forging #quickbar, body.forging #btn-exit { visibility: hidden; }
+#btn-forge-exit { position: fixed; left: 16px; bottom: 80px; z-index: 7; }
+#btn-forge-exit[hidden], #forge-hud[hidden], #enchant-banner[hidden] { display: none; }
+[data-kind="0"] { --kc: var(--glow-1); }
+[data-kind="1"] { --kc: var(--glow-2); }
+[data-kind="2"] { --kc: var(--glow-3); }
+[data-kind="3"] { --kc: var(--glow-4); }
+/* 這一輪敲了幾下：5 顆菱形，亮的用下一個附魔的顏色 */
+#forge-hud {
+  position: fixed; left: 50%; bottom: 172px; transform: translateX(-50%); z-index: 6;
+  display: flex; gap: 12px; padding: 8px 14px; border-radius: 999px; pointer-events: none;
+  background: rgba(20, 14, 10, .5);
+}
+#forge-hud span {
+  width: 12px; height: 12px; transform: rotate(45deg); border: 2px solid var(--kc);
+  opacity: .55; transition: background .15s ease, box-shadow .15s ease, opacity .15s ease;
+}
+#forge-hud span.on { background: var(--kc); box-shadow: 0 0 10px var(--kc); opacity: 1; }
+/* 附魔成功：畫面中央半透明的發光大字，像浮水印一樣浮現再淡出 */
+#enchant-banner {
+  position: fixed; inset: 0; z-index: 8; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+}
+/* 白色字芯＋附魔色光暈＋淡淡的暗影：半透明像浮水印，但在亮的爐火前也讀得清楚 */
+#enchant-banner p { margin: 0; color: #fff; opacity: 0; }
+.eb-main {
+  font-family: var(--font-title); font-weight: 700; font-size: clamp(26px, 5vw, 64px); letter-spacing: .1em;
+  max-width: calc(100vw - 32px);
+  text-shadow: 0 0 6px var(--kc), 0 0 18px var(--kc), 0 0 44px var(--kc), 0 3px 22px rgba(20, 10, 30, .55);
+}
+.eb-main::before, .eb-main::after { content: '✦'; font-size: .45em; vertical-align: .55em; margin: 0 .5em; }
+.eb-sub {
+  margin-top: 10px !important; font-size: clamp(15px, 2.4vw, 22px); font-weight: 600; letter-spacing: .3em;
+  text-shadow: 0 0 6px var(--kc), 0 0 16px var(--kc), 0 2px 12px rgba(20, 10, 30, .6);
+}
+#enchant-banner.show .eb-main { animation: eb-in 2.8s ease-out forwards; }
+#enchant-banner.show .eb-sub { animation: eb-in 2.8s ease-out .15s forwards; }
+@keyframes eb-in {
+  0% { opacity: 0; transform: scale(.9); letter-spacing: .45em; filter: blur(8px); }
+  18% { opacity: .9; transform: scale(1); letter-spacing: .1em; filter: blur(0); }
+  70% { opacity: .82; }
+  100% { opacity: 0; transform: scale(1.05); filter: blur(4px); }
+}
+
+#obj-label {
+  position: fixed; z-index: 7; pointer-events: none; transform: translate(-50%, -130%);
+  background: var(--parchment); color: var(--ink); font-family: var(--font-title);
+  padding: 4px 10px; border-radius: 6px; font-size: 14px; box-shadow: 0 4px 14px rgba(0,0,0,.4);
+}
+#obj-label[hidden] { display: none; }
+
+/* ---------- 內容卡 ---------- */
+#card {
+  /* 懸浮卡片：上（頂列下方）、下、右留一樣的間距，捲到底時底部有明確邊界 */
+  --card-gap: 16px;
+  position: fixed; z-index: 20;
+  /* --topbar-h 由 main.js 依頂列實際高度設定（文字換行時會變高） */
+  top: calc(var(--topbar-h, 56px) + var(--card-gap)); right: var(--card-gap);
+  bottom: calc(var(--card-gap) + env(safe-area-inset-bottom, 0px));
+  width: min(440px, calc(100vw - 2 * var(--card-gap)));
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(120,80,30,.12), transparent 40%),
+    radial-gradient(circle at 90% 85%, rgba(120,80,30,.18), transparent 45%),
+    var(--parchment);
+  color: var(--ink); font-family: var(--font-serif);
+  border-left: 6px solid #3b2a5a;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(176,124,255,.25), 0 0 28px rgba(176,124,255,.18);
+  transform: translateX(calc(100% + 2 * var(--card-gap))); transition: transform .35s ease;
+  display: flex; flex-direction: column;
+}
+#card.open { transform: translateX(0); }
+#card[hidden] { display: flex; visibility: hidden; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 22px 8px; border-bottom: 1px solid var(--parchment-dark); }
+#card-title { font-family: var(--font-title); margin: 0; font-size: 24px; letter-spacing: .03em; }
+#card-close { background: var(--iron); color: var(--parchment); border: 0; border-radius: 999px; padding: 6px 12px; }
+#card-close:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+#card-body {
+  overflow-y: auto; min-height: 0; padding: 8px 22px calc(20px + env(safe-area-inset-bottom, 0px)); line-height: 1.7; font-size: 15px;
+  overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: rgba(59, 42, 90, .5) transparent;
+}
+/* 內容結尾的符文花飾：捲到這裡就是底了 */
+#card-body::after {
+  content: '✦   ✦   ✦'; display: block; text-align: center; white-space: pre;
+  padding: 14px 0 2px; font-size: 12px; color: var(--arcane); opacity: .55;
+}
+/* 捲動提示：下面還有內容時底部淡出並出現 ▾；上面還有內容時標題列下緣出現陰影。
+   捲到底提示就消失，不會讓人以為底下還有東西（.more-below／.more-above 由 main.js 依捲動位置切換） */
+#card::after {
+  content: '▾'; position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
+  display: flex; align-items: flex-end; justify-content: center; padding-bottom: 6px;
+  color: var(--ink-soft); font-size: 16px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(239, 227, 198, 0), var(--parchment) 78%);
+  opacity: 0; transition: opacity .2s ease;
+}
+#card.more-below::after { opacity: 1; }
+.card-head { position: relative; z-index: 1; transition: box-shadow .2s ease; }
+#card.more-above .card-head { box-shadow: 0 6px 10px -6px rgba(58, 42, 23, .35); }
+#toast {
+  position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2;
+  background: var(--iron); color: var(--ember-soft); font-family: ui-monospace, Consolas, monospace;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; white-space: nowrap;
+}
+#toast[hidden] { display: none; }
+
+.card-block { padding: 14px 0; border-bottom: 1px dashed rgba(58,42,23,.25); }
+.card-block:last-child { border-bottom: 0; }
+.card-kicker { margin: 0; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+.card-h { font-family: var(--font-title); font-size: 17px; margin: 4px 0 8px; color: #5a2e0c; }
+.card-text { margin: 6px 0; }
+.card-list { margin: 6px 0; padding-left: 20px; }
+.card-list li { margin: 4px 0; }
+.label { color: #8a3b12; margin-right: 2px; }
+.label::before { content: '◆ '; font-size: 10px; vertical-align: 2px; }
+/* 附魔區塊：左側符文色條 + 小標用附魔色 */
+.card-block[data-accent] { position: relative; padding-left: 14px; }
+.card-block[data-accent]::before {
+  content: ''; position: absolute; left: 0; top: 16px; bottom: 16px; width: 3px; border-radius: 3px;
+  background: var(--accent); box-shadow: 0 0 8px var(--accent);
+}
+.card-block[data-accent] .card-kicker,
+.card-block[data-accent] .label { color: var(--accent); }
+.card-block[data-accent] .card-kicker::before { content: '✦ '; }
+.card-block[data-accent="1"] { --accent: var(--enchant-1); }
+.card-block[data-accent="2"] { --accent: var(--enchant-2); }
+.card-block[data-accent="3"] { --accent: var(--enchant-3); }
+.card-block[data-accent="4"] { --accent: var(--enchant-4); }
+.card-kicker { color: var(--arcane); }
+/* 冒險者公會卡：金邊卡片、四角鉚釘、右上角公會徽記；每個欄位一列「欄位名 ｜ 內容」 */
+.card-block.sheet {
+  position: relative; margin: 14px 0 6px; padding: 16px 16px 12px;
+  background: linear-gradient(160deg, #f6ead0, #ecdcb6);
+  border: 2px solid #b8893a; border-radius: 10px;
+  box-shadow: inset 0 0 0 4px #f6ead0, inset 0 0 0 5px rgba(184, 137, 58, .55), 0 3px 10px rgba(58, 42, 23, .18);
+}
+.card-block.sheet::before {
+  content: '⚔'; position: absolute; top: 8px; right: 12px; font-size: 22px; color: #b8893a; opacity: .55;
+}
+.card-block.sheet + .card-block { border-top: 0; }
+.card-block.sheet .card-text {
+  display: grid; grid-template-columns: 6.5em 1fr; gap: 8px; align-items: baseline;
+  margin: 0; padding: 7px 0; border-bottom: 1px dotted rgba(138, 59, 18, .3);
+}
+.card-block.sheet .card-text:last-child { border-bottom: 0; }
+.card-block.sheet .label { margin: 0; font-size: 13px; letter-spacing: .04em; }
+.card-block.sheet .label::before { content: '◆ '; color: #b8893a; }
+.card-link { color: #8a3b12; font-weight: 600; display: inline-block; margin: 4px 0; word-break: break-all; }
+.card-link.ph { display: inline-block; }
+.card-btn {
+  margin-top: 12px; background: var(--ember); color: #2a1406; border: 0; border-radius: 8px;
+  padding: 10px 18px; font-weight: 700; font-family: var(--font-title); box-shadow: 0 3px 0 #a14b10;
+}
+.card-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #a14b10; }
+
+#flash {
+  position: fixed; inset: 0; z-index: 15; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 55%, #fff1c9, var(--ember) 35%, #5a1a08 90%);
+  transition: opacity .35s ease;
+}
+#flash.on { opacity: 1; }
+#scene.pointer canvas { cursor: pointer; }
+
+/* ---------- 載入與備援 ---------- */
+#loader {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 60%, #3a1d0c, var(--night) 60%);
+  transition: opacity .6s ease;
+}
+#loader.done { opacity: 0; pointer-events: none; }
+.loader-inner { text-align: center; }
+.ember-dot { width: 18px; height: 18px; border-radius: 50%; margin: 0 auto 14px; background: var(--ember); box-shadow: 0 0 24px 8px rgba(255,138,42,.6); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.35); box-shadow: 0 0 34px 14px rgba(255,138,42,.4); } }
+#loader-text { font-family: var(--font-title); letter-spacing: .08em; }
+
+#fallback {
+  /* 低於頂列（z-index 10），語言切換仍可點 */
+  position: fixed; inset: 0; z-index: 9; display: grid; place-items: center; padding: 16px; text-align: center;
+  background: radial-gradient(circle at 50% 60%, #3a1d0c, var(--night) 60%);
+}
+#fallback[hidden] { display: none; }
+#fallback p { max-width: 420px; line-height: 1.7; }
+
+/* ---------- 平面閱讀版 ---------- */
+body.plain {
+  height: auto; min-height: 100%;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255,138,42,.18), transparent 40%),
+    var(--night);
+  background-attachment: fixed;
+}
+.plain-wrap { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+.plain-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.plain-top h1 { font-family: var(--font-title); margin: 0; font-size: clamp(24px, 5vw, 36px); }
+.plain-top .sub { margin: 6px 0 0; opacity: .85; }
+.plain-top .tagline { margin: 10px 0 0; color: var(--ember-soft); font-family: var(--font-serif); }
+.plain-sheet {
+  margin-top: 24px; background: var(--parchment); color: var(--ink); border-radius: 10px;
+  padding: 8px 22px 16px; font-family: var(--font-serif); line-height: 1.7;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.plain-sheet > h2 { font-family: var(--font-title); margin: 16px 0 0; font-size: 22px; color: #5a2e0c; }
+
+@media (max-width: 720px) {
+  /* dvh：扣掉手機瀏覽器網址列／工具列，卡片底部才不會被工具列擋住 */
+  /* 窄螢幕：卡片底部停在快捷列上方（--quickbar-space 由 main.js 量測），快捷列仍可切換物件；
+     上下仍是等距懸浮：頂列下方 12px、快捷列上方 12px */
+  #card {
+    --card-gap: 12px;
+    left: var(--card-gap); right: var(--card-gap); width: auto;
+    bottom: calc(var(--quickbar-space, 0px) + var(--card-gap) + env(safe-area-inset-bottom, 0px));
+    border-left: 0; border-top: 6px solid #3b2a5a; border-radius: 16px;
+    transform: translateY(calc(100% + 2 * var(--card-gap) + env(safe-area-inset-bottom, 0px)));
+  }
+  #card.open { transform: translateY(0); }
+  #hint { bottom: 128px; font-size: 12px; }
+  /* 卡片開著時「出門」會被卡片蓋住，改用卡片的「關閉」與快捷列操作 */
+  body.card-open #btn-exit { display: none; }
+  .tool-btn { padding: 6px 10px; font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  /* 沒有動畫時直接顯示附魔大字（main.js 會計時收起） */
+  #enchant-banner.show p { opacity: .8; }
+}
